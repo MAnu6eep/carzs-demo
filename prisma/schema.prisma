@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String             @id @default(uuid())
+  email        String             @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         String             @default("customer") // "customer" | "admin"
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  favourites   Favourite[]
+  bookings     TestDriveBooking[]
+  enquiries    Enquiry[]
+}
+
+model Car {
+  id               String             @id @default(uuid())
+  title            String
+  brand            String
+  model            String
+  variant          String
+  year             Int
+  price            Int                // in INR
+  kmDriven         Int
+  fuelType         String             // Petrol, Diesel, Electric, CNG, Hybrid
+  transmission     String             // Manual, Automatic
+  bodyType         String             // SUV, Sedan, Hatchback, MUV, Coupe
+  owners           Int                @default(1)
+  location         String
+  color            String?
+  registrationYear Int
+  engineCc         Int?
+  maxPower         String?
+  insurance        String?            // Comprehensive, Third Party, Valid till Dec 2026
+  status           String             @default("AVAILABLE") // AVAILABLE, RESERVED, SOLD
+  isFeatured       Boolean            @default(false)
+  description      String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  images           CarImage[]
+  features         CarFeature[]
+  inspection       Inspection?
+  favourites       Favourite[]
+  bookings         TestDriveBooking[]
+  enquiries        Enquiry[]
+}
+
+model CarImage {
+  id           String   @id @default(uuid())
+  carId        String
+  car          Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  url          String
+  isPrimary    Boolean  @default(false)
+  displayOrder Int      @default(0)
+}
+
+model CarFeature {
+  id       String  @id @default(uuid())
+  carId    String
+  car      Car     @relation(fields: [carId], references: [id], onDelete: Cascade)
+  name     String
+  category String? // Comfort, Safety, Infotainment, Performance
+}
+
+model Inspection {
+  id              String   @id @default(uuid())
+  carId           String   @unique
+  car             Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  overallScore    Float    @default(9.0)
+  engineScore     Float    @default(9.0)
+  exteriorScore   Float    @default(9.0)
+  interiorScore   Float    @default(9.0)
+  tyresScore      Float    @default(9.0)
+  brakesScore     Float    @default(9.0)
+  electricalScore Float    @default(9.0)
+  acScore         Float    @default(9.0)
+  suspensionScore Float    @default(9.0)
+  summaryNotes    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model TestDriveBooking {
+  id            String   @id @default(uuid())
+  carId         String
+  car           Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName  String
+  customerPhone String
+  customerEmail String
+  date          String
+  timeSlot      String
+  location      String
+  status        String   @default("PENDING") // PENDING, CONFIRMED, COMPLETED, CANCELLED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Enquiry {
+  id            String   @id @default(uuid())
+  carId         String
+  car           Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName  String
+  customerPhone String
+  customerEmail String
+  message       String
+  status        String   @default("PENDING") // PENDING, CONTACTED, CONVERTED, CLOSED
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SellCarLead {
+  id            String   @id @default(uuid())
+  brand         String
+  model         String
+  variant       String?
+  year          Int
+  kmDriven      Int
+  fuelType      String
+  transmission  String
+  owners        Int      @default(1)
+  regLocation   String?
+  customerName  String
+  customerPhone String
+  customerEmail String
+  city          String
+  notes         String?
+  status        String   @default("NEW") // NEW, IN_PROGRESS, EVALUATED, CLOSED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Favourite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  carId     String
+  car       Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, carId])
+}
